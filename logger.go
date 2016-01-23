@@ -1,5 +1,12 @@
 package lazytest
 
-func init() {
-	// init logger here
+import (
+	log "github.com/Sirupsen/logrus"
+)
+
+func Render(report chan Report) {
+	for {
+		r := <- report
+		log.Info(r.Message)
+	}
 }
