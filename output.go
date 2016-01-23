@@ -9,5 +9,4 @@ func Render(report chan Report) {
 		r := <- report
 		log.Info(r.Message)
 	}
-	close(report)
 }
