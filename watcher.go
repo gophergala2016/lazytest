@@ -1,7 +1,7 @@
 package lazytest
 
 import (
-	"log"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -81,7 +81,7 @@ func handleEvents() {
 			// TODO: remove old watches on delete, add new watches on create, do both on rename
 
 		case err := <-watcher.Errors:
-			log.Printf("Watcher error %v", err)
+			Log(fmt.Sprintf("Watcher error %v", err))
 		}
 	}
 }

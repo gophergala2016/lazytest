@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/gophergala2016/lazytest"
-	"github.com/mattn/go-colorable"
 )
 
 var (
@@ -26,7 +25,7 @@ func main() {
 
 	events, err := lazytest.Watch(*root, exts, excl)
 	if err != nil {
-		log.Println(err)
+		lazytest.Log(err.Error())
 		return
 	}
 	testBatch := lazytest.MatchTests(events)
