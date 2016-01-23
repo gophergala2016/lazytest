@@ -4,13 +4,15 @@ import (
 	"github.com/k0kubun/go-ansi"
 )
 
-func Log(text string) {
+func log(text string) {
 	ansi.Println(text)
 }
 
 func Render(report chan Report) {
 	for {
 		r := <- report
-		Log(r.Message)
+		for _, test := range r {
+			log(test.Message)
+		}
 	}
 }
