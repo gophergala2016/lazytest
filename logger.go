@@ -1,12 +1,12 @@
 package lazytest
 
 import (
-	log "github.com/Sirupsen/logrus"
+	"github.com/k0kubun/go-ansi"
 )
 
 func Render(report chan Report) {
 	for {
 		r := <- report
-		log.Info(r.Message)
+		ansi.Println(r.Message)
 	}
 }
