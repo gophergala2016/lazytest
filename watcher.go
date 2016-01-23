@@ -47,7 +47,6 @@ func Watch(r string, ext []string, excl []string) (chan Mod, error) {
 
 	// walk folder tree starting at the path
 	filepath.Walk(absP, func(path string, info os.FileInfo, err error) error {
-		log.Println(path)
 		if info.IsDir() {
 			if !isIncluded(path) {
 				return filepath.SkipDir
@@ -79,10 +78,10 @@ func handleEvents() {
 					FilePath: e.Name,
 				}
 			}
+			// TODO: remove old watches on delete, add new watches on create, do both on rename
 
 		case err := <-watcher.Errors:
 			log.Printf("Watcher error %v", err)
-			return
 		}
 	}
 }
