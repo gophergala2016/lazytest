@@ -70,6 +70,5 @@ func watch() {
 
 func Watch(include []FileMatch, exclude []FileMatch) chan Mod {
 	mods := make(chan Mod, 50)
-
 	return mods
 }
