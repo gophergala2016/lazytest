@@ -10,7 +10,7 @@ func log(text string) {
 
 func Render(report chan Report) {
 	for {
-		r := <- report
+		r := <-report
 		for _, test := range r {
 			log(test.Message)
 		}

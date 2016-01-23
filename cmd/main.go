@@ -18,7 +18,7 @@ func init() {
 	flag.StringVar(&flags.root, "root", ".", "watch root")
 	flag.StringVar(&flags.exclude, "exclude", "/vendor/", "exclude paths")
 	flag.StringVar(&flags.extensions, "extensions", "go,tpl,html",
-				   "file extensions to watch")
+		"file extensions to watch")
 	flag.Parse()
 }
 
@@ -29,7 +29,7 @@ func main() {
 }
 
 func watch() chan lazytest.Mod {
-	exclude    := strings.Split(flags.exclude, ",")
+	exclude := strings.Split(flags.exclude, ",")
 	extensions := strings.Split(flags.extensions, ",")
 
 	events, err := lazytest.Watch(flags.root, extensions, exclude)
