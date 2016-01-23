@@ -4,7 +4,6 @@ import (
 	"flag"
 	"os"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gophergala2016/lazytest"
 )
 
@@ -17,8 +16,6 @@ var (
 
 func init() {
 	flags.Parse(os.Args[1:])
-	log.SetFormatter(&log.TextFormatter{ForceColors: true})
-	log.SetOutput(colorable.NewColorableStdout())
 }
 
 func main() {
