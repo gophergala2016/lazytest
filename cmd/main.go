@@ -17,5 +17,9 @@ var (
 func main() {
 	flags.Parse(os.Args[1:])
 
-	lazytest.Watch(nil, nil)
+	// add error handling to all 4
+	events := lazytest.Watch(nil, nil)
+	testBatch := lazytest.MatchTests(events)
+	report := lazytest.Runner(testBatch)
+	lazytest.Render(report)
 }
