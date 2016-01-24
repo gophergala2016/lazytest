@@ -37,7 +37,7 @@ type TestReport struct {
 }
 
 var (
-	runnerDone   chan struct{}
+	runnerDone   chan struct{} = make(chan struct{})
 	runnerStatus int32
 	mux          sync.Mutex
 	queue        *testQueue = &testQueue{}
