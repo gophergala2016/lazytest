@@ -54,7 +54,7 @@ func (w *fileWatcher) isIncluded(path string) bool {
 
 	for _, e := range w.exclude {
 		if filepath.HasPrefix(path, e) {
-		   return false
+			return false
 		}
 	}
 
