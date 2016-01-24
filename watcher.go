@@ -46,18 +46,15 @@ func (w *fileWatcher) handleEvent(e fsnotify.Event, eventChannel chan Mod) {
 func (w *fileWatcher) isIncluded(path string) bool {
 	include := len(w.extensions) == 0
 
-	if !include {
-		ext := filepath.Ext(path)
-		for _, e := range w.extensions {
-			if ext == e {
-				include = true
-			}
+	for _, e := range w.extensions {
+		if filepath.Ext(path) == e {
+			include = true
 		}
 	}
 
 	for _, e := range w.exclude {
 		if filepath.HasPrefix(path, e) {
-			include = false
+		   return false
 		}
 	}
 
