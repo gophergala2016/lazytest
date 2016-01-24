@@ -75,6 +75,7 @@ func (t *testQueue) run() {
 }
 
 func queueTests(batch chan Batch, rep chan Report) {
+	block := make(chan struct{})
 	var delay *time.Timer
 	for {
 		select {
@@ -82,14 +83,18 @@ func queueTests(batch chan Batch, rep chan Report) {
 			mux.Lock()
 			if delay == nil {
 				delay = time.NewTimer(time.Second * 2)
+				go func(d *time.Timer) {
+					<-d.C
+					block <- struct{}{}
+				}(delay)
 			}
-			if len(queue.tests) == 0 {
+			if queue.tests == nil {
 				queue.tests = make([]Batch, 0)
 			}
 			queue.tests = append(queue.tests, b)
 			mux.Unlock()
 
-		case <-delay.C:
+		case <-block:
 			mux.Lock()
 			if atomic.CompareAndSwapInt32(&runnerStatus, RunnerIdle, RunnerBusy) {
 				delay = nil
