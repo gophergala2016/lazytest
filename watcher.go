@@ -23,7 +23,7 @@ type Mod struct {
 }
 
 func (w *fileWatcher) handleDir(path string) error {
-	if !w.isIncluded(path) {
+	if !w.isIncluded(path, false) {
 		return filepath.SkipDir
 	}
 
@@ -43,12 +43,16 @@ func (w *fileWatcher) handleEvent(e fsnotify.Event, eventChannel chan Mod) {
 	// TODO: remove old watches on delete, add new watches on create, do both on rename
 }
 
-func (w *fileWatcher) isIncluded(path string) bool {
+func (w *fileWatcher) isIncluded(path string, isFile bool) bool {
 	include := len(w.extensions) == 0
 
-	for _, e := range w.extensions {
-		if filepath.Ext(path) == e {
-			include = true
+	if !isFile {
+		include = true
+	} else {
+		for _, e := range w.extensions {
+			if filepath.Ext(path) == e {
+				include = true
+			}
 		}
 	}
 
@@ -78,7 +82,7 @@ func (w *fileWatcher) walk(path string, info os.FileInfo, err error) error {
 		return w.handleDir(path)
 	}
 
-	if w.isIncluded(path) {
+	if w.isIncluded(path, true) {
 		return w.watcher.Add(path)
 	}
 
