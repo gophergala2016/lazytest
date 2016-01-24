@@ -55,6 +55,9 @@ func Runner(batch chan Batch) chan Report {
 func (t *testQueue) run() {
 	packageTests := make(map[string][]string)
 	for _, test := range t.tests {
+		if _, ok := packageTests[test.Package]; !ok {
+			packageTests[test.Package] = make([]string, 0)
+		}
 		packageTests[test.Package] = append(packageTests[test.Package], regexp.QuoteMeta(test.TestName))
 	}
 	for pkg, tests := range packageTests {
@@ -79,6 +82,9 @@ func queueTests(batch chan Batch, rep chan Report) {
 			mux.Lock()
 			if delay == nil {
 				delay = time.NewTimer(time.Second * 2)
+			}
+			if len(queue.tests) == 0 {
+				queue.tests = make([]Batch, 0)
 			}
 			queue.tests = append(queue.tests, b)
 			mux.Unlock()
