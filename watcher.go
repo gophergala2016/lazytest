@@ -9,17 +9,17 @@ import (
 	"gopkg.in/fsnotify.v1"
 )
 
+type fileWatcher struct {
+	extensions []string
+	exclude    []string
+	watcher    *fsnotify.Watcher
+}
+
 type Mod struct {
 	Package  string
 	FilePath string
 	Function string
 	Line     int
-}
-
-type fileWatcher struct {
-	extensions []string
-	exclude    []string
-	watcher    *fsnotify.Watcher
 }
 
 func (w *fileWatcher) handleDir(path string) error {
@@ -85,7 +85,7 @@ func (w *fileWatcher) walk(path string, info os.FileInfo, err error) error {
 		return w.watcher.Add(path)
 	}
 
-	return nil
+	return err
 }
 
 func Watch(root string, extensions []string, exclude []string) (chan Mod,
