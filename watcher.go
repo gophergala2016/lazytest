@@ -22,29 +22,72 @@ type fileWalker struct {
 	watcher    *fsnotify.Watcher
 }
 
+func (w *fileWalker) handleDir(path string) error {
+	if !w.isIncluded(path) {
+		return filepath.SkipDir
+	}
+
+	if len(path) > 1 && strings.HasPrefix(filepath.Base(path), ".") {
+		return filepath.SkipDir
+	}
+
+	return w.watcher.Add(path)
+}
+
+func handleEvent(e fsnotify.Event, eventChannel chan Mod) {
+	if e.Op|fsnotify.Rename == e.Op || e.Op|fsnotify.Chmod == e.Op {
+		return
+	}
+
+	eventChannel <- Mod{FilePath: e.Name}
+	// TODO: remove old watches on delete, add new watches on create, do both on rename
+}
+
+func (w *fileWalker) isIncluded(path string) bool {
+	include := len(w.extensions) == 0
+
+	if !include {
+		ext := filepath.Ext(path)
+		for _, e := range w.extensions {
+			if ext == e {
+				include = true
+			}
+		}
+	}
+
+	for _, e := range w.exclude {
+		if filepath.HasPrefix(path, e) {
+			include = false
+		}
+	}
+
+	return include
+}
+
+func (w *fileWalker) listenForEvents(eventChannel chan Mod) {
+	for {
+		select {
+		case e := <-w.watcher.Events:
+			handleEvent(e, eventChannel)
+
+		case err := <-w.watcher.Errors:
+			log(fmt.Sprintf("Watcher error %v", err))
+		}
+	}
+}
+
 func (w *fileWalker) walkFunction(path string, info os.FileInfo,
 	err error) error {
 
 	if info.IsDir() {
-		if !w.isIncluded(path) {
-			return filepath.SkipDir
-		}
-		if len(path) > 1 && strings.HasPrefix(filepath.Base(path), ".") {
-			return filepath.SkipDir
-		}
-		if err := w.watcher.Add(path); err != nil {
-			panic(err) // TODO: better error handling
-		}
-		return err
+		return w.handleDir(path)
 	}
 
 	if w.isIncluded(path) {
-		if err := w.watcher.Add(path); err != nil {
-			panic(err) // TODO: better error handling
-		}
+		return w.watcher.Add(path)
 	}
 
-	return err
+	return nil
 }
 
 func Watch(root string, extensions []string, exclude []string) (chan Mod,
@@ -67,48 +110,6 @@ func Watch(root string, extensions []string, exclude []string) (chan Mod,
 	}
 
 	events := make(chan Mod, 50)
-	go walker.handleEvents(events)
+	go walker.listenForEvents(events)
 	return events, filepath.Walk(absolutePath, walker.walkFunction)
-}
-
-func (w *fileWalker) handleEvents(events chan Mod) {
-	for {
-		select {
-		case e := <-w.watcher.Events:
-			// don't trigger events on file being renamed or chmod changed
-			if (e.Op|fsnotify.Write == e.Op) || (e.Op|fsnotify.Create == e.Op) || (e.Op|fsnotify.Remove == e.Op) {
-				events <- Mod{
-					FilePath: e.Name,
-				}
-			}
-			// TODO: remove old watches on delete, add new watches on create, do both on rename
-
-		case err := <-w.watcher.Errors:
-			log(fmt.Sprintf("Watcher error %v", err))
-		}
-	}
-}
-
-func (w *fileWalker) isIncluded(path string) bool {
-	include := false
-
-	// if no extensions were provided match all
-	if len(w.extensions) == 0 {
-		include = true
-	} else {
-		ext := filepath.Ext(path)
-		for _, e := range w.extensions {
-			if ext == e {
-				include = true
-			}
-		}
-	}
-
-	for _, e := range w.exclude {
-		if filepath.HasPrefix(path, e) {
-			include = false
-		}
-	}
-
-	return include
 }
