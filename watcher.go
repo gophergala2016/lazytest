@@ -16,13 +16,13 @@ type Mod struct {
 	Line     int
 }
 
-type fileWalker struct {
+type fileWatcher struct {
 	extensions []string
 	exclude    []string
 	watcher    *fsnotify.Watcher
 }
 
-func (w *fileWalker) handleDir(path string) error {
+func (w *fileWatcher) handleDir(path string) error {
 	if !w.isIncluded(path) {
 		return filepath.SkipDir
 	}
@@ -34,7 +34,7 @@ func (w *fileWalker) handleDir(path string) error {
 	return w.watcher.Add(path)
 }
 
-func handleEvent(e fsnotify.Event, eventChannel chan Mod) {
+func (w *fileWatcher) handleEvent(e fsnotify.Event, eventChannel chan Mod) {
 	if e.Op|fsnotify.Rename == e.Op || e.Op|fsnotify.Chmod == e.Op {
 		return
 	}
@@ -43,7 +43,7 @@ func handleEvent(e fsnotify.Event, eventChannel chan Mod) {
 	// TODO: remove old watches on delete, add new watches on create, do both on rename
 }
 
-func (w *fileWalker) isIncluded(path string) bool {
+func (w *fileWatcher) isIncluded(path string) bool {
 	include := len(w.extensions) == 0
 
 	if !include {
@@ -64,11 +64,11 @@ func (w *fileWalker) isIncluded(path string) bool {
 	return include
 }
 
-func (w *fileWalker) listenForEvents(eventChannel chan Mod) {
+func (w *fileWatcher) listenForEvents(eventChannel chan Mod) {
 	for {
 		select {
 		case e := <-w.watcher.Events:
-			handleEvent(e, eventChannel)
+			w.handleEvent(e, eventChannel)
 
 		case err := <-w.watcher.Errors:
 			log(fmt.Sprintf("Watcher error %v", err))
@@ -76,9 +76,7 @@ func (w *fileWalker) listenForEvents(eventChannel chan Mod) {
 	}
 }
 
-func (w *fileWalker) walkFunction(path string, info os.FileInfo,
-	err error) error {
-
+func (w *fileWatcher) walk(path string, info os.FileInfo, err error) error {
 	if info.IsDir() {
 		return w.handleDir(path)
 	}
@@ -103,13 +101,13 @@ func Watch(root string, extensions []string, exclude []string) (chan Mod,
 		return nil, err
 	}
 
-	walker := &fileWalker{
+	w := &fileWatcher{
 		extensions: extensions,
 		exclude:    exclude,
 		watcher:    watcher,
 	}
 
 	events := make(chan Mod, 50)
-	go walker.listenForEvents(events)
-	return events, filepath.Walk(absolutePath, walker.walkFunction)
+	go w.listenForEvents(events)
+	return events, filepath.Walk(absolutePath, w.walk)
 }
