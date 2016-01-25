@@ -82,6 +82,8 @@ func queueTests(batch chan Batch, rep chan Report) {
 		case b := <-batch:
 			mux.Lock()
 			if delay == nil {
+				log("Filechange detected, running tests...")
+
 				delay = time.NewTimer(time.Second * 2)
 				go func(d *time.Timer) {
 					<-d.C

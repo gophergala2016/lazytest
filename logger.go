@@ -8,6 +8,9 @@ func log(text string) {
 	ansi.Println(text)
 }
 
+/*
+ * Render listens on a provided channel and logs incoming messages
+ */
 func Render(report chan Report) {
 	for {
 		r := <-report

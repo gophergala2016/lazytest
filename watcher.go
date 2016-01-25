@@ -17,6 +17,9 @@ type fileWatcher struct {
 	watcher    *fsnotify.Watcher
 }
 
+/*
+ * Mod is a struct holding all the information about a file modification.
+ */
 type Mod struct {
 	Package  string
 	FilePath string
@@ -94,6 +97,10 @@ func (w *fileWatcher) walk(path string, info os.FileInfo, err error) error {
 	return err
 }
 
+/*
+ * Watch sets up a file watcher using the provided options. It returns a channel
+ * of modifications.
+ */
 func Watch(root string, extensions []string, exclude []string) (chan Mod,
 	error) {
 
