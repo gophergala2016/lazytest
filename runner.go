@@ -61,9 +61,13 @@ func (t *testQueue) run() {
 		packageTests[test.Package] = append(packageTests[test.Package], regexp.QuoteMeta(test.TestName))
 	}
 	for pkg, tests := range packageTests {
-		testRegexp := fmt.Sprintf("'(%s)'", strings.Join(tests, "|"))
+		cmdStr := []string{"test", "-v", pkg}
+		if len(tests) > 0 {
+			testRegexp := fmt.Sprintf("'(%s)'", strings.Join(tests, "|"))
+			cmdStr = append(cmdStr, "-run", testRegexp)
+		}
 
-		cmd := exec.Command("go", "test", pkg, "-run", testRegexp)
+		cmd := exec.Command("go", cmdStr...)
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			log(err.Error())
