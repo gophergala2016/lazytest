@@ -2,6 +2,8 @@ package lazytest
 
 import (
 	"fmt"
+	"go/parser"
+	"go/token"
 	"os"
 	"path/filepath"
 	"strings"
@@ -39,7 +41,10 @@ func (w *fileWatcher) handleEvent(e fsnotify.Event, eventChannel chan Mod) {
 		return
 	}
 
-	eventChannel <- Mod{FilePath: e.Name}
+	eventChannel <- Mod{
+		FilePath: e.Name,
+		Package:  packageName(e.Name),
+	}
 	// TODO: remove old watches on delete, add new watches on create, do both on rename
 }
 
@@ -111,4 +116,29 @@ func Watch(root string, extensions []string, exclude []string) (chan Mod,
 	events := make(chan Mod, 50)
 	go w.listenForEvents(events)
 	return events, filepath.Walk(absolutePath, w.walk)
+}
+
+func packageName(path string) string {
+	fset := token.NewFileSet()
+	// parse the go source file, but only the package clause
+	astFile, err := parser.ParseFile(fset, path, nil, parser.PackageClauseOnly)
+	if err != nil {
+		log(err.Error())
+		return ""
+	}
+	if astFile.Name == nil {
+		log("no name")
+		return ""
+	}
+	pkg := filepath.Dir(path)
+	lastSlash := strings.LastIndex(pkg, string(filepath.Separator)) + 1
+	pkg = pkg[0:lastSlash]
+	pkg = pkg + astFile.Name.Name
+
+	gopath := os.Getenv("GOPATH")
+	gosrc := gopath + string(filepath.Separator) + "src" + string(filepath.Separator)
+
+	pkg = strings.TrimPrefix(pkg, gosrc)
+
+	return pkg
 }
